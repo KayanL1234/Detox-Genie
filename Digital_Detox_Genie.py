@@ -7,20 +7,27 @@ def add_message(role, content):
     st.session_state.messages.append({"role": role, "content": content})
     if role == "assistant":
         try:
-            with st.chat_message(role, avatar="assets/genie.png"):
-                # Add CSS to increase avatar size and align with text
+            with st.chat_message(role):
+                # Add CSS to hide default avatar and overlay genie image
                 st.markdown("""
                     <style>
                     [data-testid="stChatMessageAvatar"] {
                         width: 50px !important;
                         height: 50px !important;
                         margin-top: 0 !important;
+                        position: relative;
                     }
                     [data-testid="stChatMessageAvatar"] img {
+                        display: none !important; /* Hide default avatar */
+                    }
+                    [data-testid="stChatMessageAvatar"]:after {
+                        content: url('D:\\OneDrive\\Desktop\\doc\\genie.png');
+                        position: absolute;
+                        top: 0;
+                        left: 0;
                         width: 50px !important;
                         height: 50px !important;
-                        object-fit: contain !important;
-                        margin-top: 8px !important;
+                        object-fit: contain;
                     }
                     [data-testid="stChatMessage"] {
                         align-items: flex-start !important;
@@ -30,7 +37,37 @@ def add_message(role, content):
                 """, unsafe_allow_html=True)
                 st.markdown(content)
         except Exception:
-            with st.chat_message(role, avatar="🤖"):
+            with st.chat_message(role):
+                # Add CSS for fallback avatar
+                st.markdown("""
+                    <style>
+                    [data-testid="stChatMessageAvatar"] {
+                        width: 50px !important;
+                        height: 50px !important;
+                        margin-top: 0 !important;
+                        position: relative;
+                    }
+                    [data-testid="stChatMessageAvatar"] img {
+                        display: none !important; /* Hide default avatar */
+                    }
+                    [data-testid="stChatMessageAvatar"]:after {
+                        content: '🤖';
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        width: 50px !important;
+                        height: 50px !important;
+                        font-size: 2rem;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+                    [data-testid="stChatMessage"] {
+                        align-items: flex-start !important;
+                        padding-top: 8px !important;
+                    }
+                    </style>
+                """, unsafe_allow_html=True)
                 st.markdown(content)
     else:
         with st.chat_message(role):
