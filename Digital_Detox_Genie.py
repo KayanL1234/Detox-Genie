@@ -7,7 +7,7 @@ def add_message(role, content):
     st.session_state.messages.append({"role": role, "content": content})
     if role == "assistant":
         try:
-            with st.chat_message(role, avatar="genie.png"):
+            with st.chat_message(role, avatar="assets/genie.png"):
                 # Add CSS to increase avatar size and align with text
                 st.markdown("""
                     <style>
