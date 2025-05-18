@@ -15,19 +15,6 @@ def add_message(role, content):
                         width: 50px !important;
                         height: 50px !important;
                         margin-top: 0 !important;
-                        position: relative;
-                    }
-                    [data-testid="stChatMessageAvatar"] img {
-                        display: none !important; /* Hide default avatar */
-                    }
-                    [data-testid="stChatMessageAvatar"]:after {
-                        content: url('D:\\OneDrive\\Desktop\\doc\\genie.png');
-                        position: absolute;
-                        top: 0;
-                        left: 0;
-                        width: 50px !important;
-                        height: 50px !important;
-                        object-fit: contain;
                     }
                     [data-testid="stChatMessage"] {
                         align-items: flex-start !important;
