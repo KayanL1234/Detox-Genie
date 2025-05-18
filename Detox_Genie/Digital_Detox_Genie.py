@@ -63,7 +63,7 @@ color_schemes = {
     "Pearl Light": {
         "primary": "#e5e7eb",  # light grey
         "background": "#f9f9fb",  # clean off-white
-        "accent": "#bcd0ee",  # gentle blue
+        "accent": "#354763",  # gentle blue
         "text": "#222831"  # strong dark grey
     },
     "Morning Mist": {
