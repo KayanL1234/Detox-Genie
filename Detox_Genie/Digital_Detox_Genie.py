@@ -6,28 +6,54 @@ if "messages" not in st.session_state:
 def add_message(role, content):
     st.session_state.messages.append({"role": role, "content": content})
     if role == "assistant":
-        with st.chat_message(role, avatar="D:\\OneDrive\\Desktop\\doc\\genie.png"):
-            # Add CSS to increase avatar size and align with text
-            st.markdown("""
-                <style>
-                [data-testid="stChatMessageAvatar"] {
-                    width: 50px !important;
-                    height: 50px !important;
-                    margin-top: 0 !important;
-                }
-                [data-testid="stChatMessageAvatar"] img {
-                    width: 50px !important;
-                    height: 50px !important;
-                    object-fit: contain !important;
-                    margin-top: 8px !important;
-                }
-                [data-testid="stChatMessage"] {
-                    align-items: flex-start !important;
-                    padding-top: 8px !important;
-                }
-                </style>
-            """, unsafe_allow_html=True)
-            st.markdown(content)
+        try:
+            with st.chat_message(role):
+                # Add CSS to hide default avatar and overlay genie image
+                st.markdown("""
+                    <style>
+                    [data-testid="stChatMessageAvatar"] {
+                        width: 50px !important;
+                        height: 50px !important;
+                        margin-top: 0 !important;
+                    }
+                    [data-testid="stChatMessage"] {
+                        align-items: flex-start !important;
+                        padding-top: 8px !important;
+                    }
+                    </style>
+                """, unsafe_allow_html=True)
+                st.markdown(content)
+        except Exception:
+            with st.chat_message(role):
+                # Add CSS for fallback avatar
+                st.markdown("""
+                    <style>
+                    [data-testid="stChatMessageAvatar"] {
+                        width: 50px !important;
+                        height: 50px !important;
+                        margin-top: 0 !important;
+                        position: relative;
+                    }
+                    [data-testid="stChatMessageAvatar"] img {
+                        display: none !important; /* Hide default avatar */
+                    }
+                    [data-testid="stChatMessageAvatar"]:after {
+                        content: '';
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        width: 50px !important;
+                        height: 50px !important;
+                        background: url('./genie.png') no-repeat center center !important;
+                        background-size: contain !important;
+                    }
+                    [data-testid="stChatMessage"] {
+                        align-items: flex-start !important;
+                        padding-top: 8px !important;
+                    }
+                    </style>
+                """, unsafe_allow_html=True)
+                st.markdown(content)
     else:
         with st.chat_message(role):
             st.markdown(content)
@@ -583,7 +609,7 @@ def create_tt():
                     error_message = "The minutes value must be less than 60"
                     raise ValueError
                 et_mins = int(60*((end_float//1)) + 100*((end_float)%1))
-                if et_mins < 0 or et_mins >= 1440:  # Check if time is within 24 hours
+                if et_mins < 0 or et_mins > 1440:  # Check if time is within 24 hours
                     error_message = "End time must be between 00:00 and 23:59"
                     raise ValueError
                 elif et_mins <= st_mins:
@@ -860,7 +886,10 @@ def end_time_input():
 def et_validinputcheck():
     globals()[f"et_mins{item_no}"]= int(60*((globals()[f"end_{item_no}"])//1) + 100*((globals()[f"end_{item_no}"])%1))
     if not (globals()[f"et_mins{item_no}"]-1) in st.session_state.time_left :
-        st.error("Give a valid input The value you entered is either already set in the timetable or out of the range of 24 hours")
+        st.error("Give a valid input The value you entered is either already set in the timetable or out of the range of 24 hours (00.00 to 24.00)")
+    elif globals()[f"et_mins{item_no}"] > 1440:  # 24 hours in minutes
+        st.error("End time cannot be after 24.00")
+        end_time_input()
         end_time_input()
     elif globals()[f"et_mins{item_no}"]<globals()[f"st_mins{item_no}"]:
         st.error("End time cannot be before the start time")
@@ -880,6 +909,15 @@ def st_validinputcheck():
     end_time_input()
     #calculating the end time value in minutes
     et_validinputcheck()
+# Define detox activity names
+dda_item_group = [
+    "Music Therapy",
+    "Crystal Ball Activity",
+    "Exercise/Sports",
+    "Art",
+    "Nature Time"
+]
+
 def detox_activities():
     # Initialize session state for detox activities if needed
     if 'detox_step' not in st.session_state:
@@ -888,6 +926,20 @@ def detox_activities():
         st.session_state.duration_dda = None
         st.session_state.groups = []
         st.session_state.da_mins = 0
+        # Initialize timetable-related session state
+        if 'itemsss' not in st.session_state:
+            st.session_state.itemsss = {}
+        if 'item_count' not in st.session_state:
+            st.session_state.item_count = 0
+        if 'time_left' not in st.session_state:
+            st.session_state.time_left = sorted(set(range(0,1441)))
+    
+    add_message("assistant","""Digital detox activities include:
+1) Music therapy
+2) Crystal ball activity
+3) Exercise/ sports
+4) Art
+5) Spend time with nature""")
     add_message("assistant","""Digital detox activities include:
 1) Music therapy
 2) Crystal ball activity
@@ -937,21 +989,37 @@ def detox_activities():
                     if len(st.session_state.groups) < len(st.session_state.choice_of_da):
                         st.error(f"Not enough time slots available. Found {len(st.session_state.groups)} time slots but need {len(st.session_state.choice_of_da)}. Try a shorter duration.")
                         return
+                    if not st.session_state.choice_of_da:
+                        st.error("Please select at least one activity")
+                        return
+                    
                     # Schedule activities in available time slots
                     for i in range(len(st.session_state.choice_of_da)):
-                        activity_idx = st.session_state.choice_of_da[i]
+                        activity_idx = st.session_state.choice_of_da[i] - 1  # Adjust for 0-based indexing
+                        if activity_idx < 0 or activity_idx >= len(dda_item_group):
+                            st.error(f"Invalid activity index: {activity_idx}")
+                            return
+                        
                         start_time = st.session_state.groups[i][0]
                         end_time = start_time + duration_per_activity
-                        st.session_state.itemsss[st.session_state.item_count + i + 1] = {
-                            'name': dda_item_group[activity_idx],
-                            'st_mins': start_time,
-                            'et_mins': end_time,
-                            'time_range': list(range(start_time, end_time))
-                        }
-                        # Update time_left
-                        for i in range(start_time, end_time):
-                            st.session_state.time_left.remove(i)
-                        st.session_state.time_left = sorted(st.session_state.time_left)
+                        
+                        # Check if time slot is still available
+                        if any(t in st.session_state.time_left for t in range(start_time, end_time)):
+                            st.session_state.itemsss[st.session_state.item_count + i + 1] = {
+                                'name': dda_item_group[activity_idx],
+                                'st_mins': start_time,
+                                'et_mins': end_time,
+                                'time_range': list(range(start_time, end_time))
+                            }
+                            # Update time_left
+                            for t in range(start_time, end_time):
+                                if t in st.session_state.time_left:
+                                    st.session_state.time_left.remove(t)
+                            st.session_state.time_left = sorted(st.session_state.time_left)
+                        else:
+                            st.error(f"Time slot {start_time}-{end_time} is no longer available")
+                            return
+                    
                     st.session_state.input_step = 'show_timetable'
                     st.rerun()
                 else:
